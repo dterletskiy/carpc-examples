@@ -1,7 +1,7 @@
 // Application
 #include "imp/symbiont/components/onoff/Component.hpp"
 
-#include "api/sys/trace/Trace.hpp"
+#include "carpc/trace/Trace.hpp"
 #define CLASS_ABBR "OnOff"
 
 

@@ -1,7 +1,7 @@
 #include "imp/app/components/OnOff/fsm/Manager.hpp"
 #include "imp/app/components/OnOff/fsm/Loaded.hpp"
 
-#include "api/sys/trace/Trace.hpp"
+#include "carpc/trace/Trace.hpp"
 #define CLASS_ABBR "LOADED"
 
 

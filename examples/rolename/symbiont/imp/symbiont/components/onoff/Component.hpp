@@ -1,7 +1,7 @@
 #pragma once
 
 // Framework
-#include "api/sys/application/RootComponent.hpp"
+#include "carpc/application/RootComponent.hpp"
 // Application
 #include "imp/symbiont/events/AppEvent.hpp"
 #include "imp/symbiont/components/onoff/server/OnOff.hpp"
