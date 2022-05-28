@@ -53,6 +53,9 @@ generate_adls( "${ADL_FILES}" PROJECT_GEN_ADL_FILES )
 file( GLOB_RECURSE IDL_FILES ${PROJECT_SOURCE_DIR}/*.idl )
 generate_idls( "${IDL_FILES}" PROJECT_GEN_IDL_FILES )
 
+file( GLOB_RECURSE DDL_FILES ${PROJECT_SOURCE_DIR}/*.ddl )
+generate_ddls( "${DDL_FILES}" PROJECT_GEN_DDL_FILES )
+
 file( GLOB_RECURSE PROTO_FILES ${PROJECT_SOURCE_DIR}/*.proto )
 generate_gpbs( "${PROTO_FILES}" PROJECT_GEN_PROTO_FILES )
 
@@ -81,11 +84,19 @@ add_library(
    ${PROJECT_SOURCE_FILES}
    ${PROJECT_GEN_ADL_FILES}
    ${PROJECT_GEN_IDL_FILES}
+   ${PROJECT_GEN_DDL_FILES}
    ${PROJECT_GEN_PROTO_FILES}
 )
 
 target_link_libraries( ${TARGET_NAME} tracing )
 target_link_libraries( ${TARGET_NAME} framework )
+
+if( DLT_TRACE )
+   target_link_libraries( ${TARGET_NAME} dlt )
+endif( )
+if( ${OS_TARGET} EQUAL ${OS_ANDROID} )
+   target_link_libraries( ${TARGET_NAME} log )
+endif( )
 
 install( TARGETS ${TARGET_NAME} DESTINATION lib )
 install( DIRECTORY ${PROJECT_SOURCE_DIR}/api DESTINATION include )

@@ -96,5 +96,12 @@ if( INSTRUMENTAL )
    target_link_libraries( ${TARGET_NAME} instrumental )
 endif( )
 
+if( DLT_TRACE )
+   target_link_libraries( ${TARGET_NAME} dlt )
+endif( )
+if( ${OS_TARGET} EQUAL ${OS_ANDROID} )
+   target_link_libraries( ${TARGET_NAME} log )
+endif( )
+
 install( TARGETS ${TARGET_NAME} DESTINATION bin )
 install( FILES ${PROJECT_SOURCE_DIR}/${TARGET_NAME}.cfg DESTINATION etc )
