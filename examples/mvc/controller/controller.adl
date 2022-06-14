@@ -1,20 +1,21 @@
-author dterletskiy
+author: dterletskiy;
+version: 1.0.0;
 
 
 
-component OnOff
+component: OnOff
 {
-   include: "imp/controller/components/onoff/Component.hpp"
-   creator: controller::components::onoff::Component::creator
-}
+   include: "imp/controller/components/onoff/Component.hpp";
+   creator: controller::components::onoff::Component::creator;
+};
 
-thread OnOff_Service
+thread: OnOff_Service
 {
-   components: OnOff
-   watchdog: 5
-}
+   components: OnOff;
+   watchdog: 5;
+};
 
-application controller
+application: controller
 {
-   threads: OnOff_Service
-}
+   threads: OnOff_Service;
+};

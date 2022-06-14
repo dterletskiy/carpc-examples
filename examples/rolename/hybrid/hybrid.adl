@@ -1,20 +1,21 @@
-author dterletskiy
+author: dterletskiy;
+version: 1.0.0;
 
 
 
-component OnOff
+component: OnOff
 {
-   include: "imp/hybrid/components/onoff/Component.hpp"
-   creator: hybrid::components::onoff::Component::creator
-}
+   include: "imp/hybrid/components/onoff/Component.hpp";
+   creator: hybrid::components::onoff::Component::creator;
+};
 
-thread OnOff_Service
+thread: OnOff_Service
 {
-   components: OnOff
-   watchdog: 5
-}
+   components: OnOff;
+   watchdog: 5;
+};
 
-application hybrid
+application: hybrid
 {
-   threads: OnOff_Service
-}
+   threads: OnOff_Service;
+};

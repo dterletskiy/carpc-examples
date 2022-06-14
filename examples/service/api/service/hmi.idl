@@ -1,12 +1,7 @@
-author dterletskiy
+author: dterletskiy;
+interface: hmi;
+version: 1.0.0;
 
+ipc: false;
 
-
-interface hmi
-{
-   version 1.0.0
-
-   ipc: false;
-
-   method: init( size_t x, size_t y ) -> ( bool result );
-}
+method: init( size_t x, size_t y ) -> ( bool result );

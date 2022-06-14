@@ -1,16 +1,13 @@
-author dterletskiy
+author: dterletskiy;
+interface: onoff;
+version: 2.0.0;
 
+import: "api/service/navigation/base.ddl";
 
+ipc: true;
 
-interface onoff
-{
-   version 2.0.0
+method: trigger_state( string state, size_t timeout ) -> ( bool result );
 
-   ipc: true;
+method: start( );
 
-   method: trigger_state( string state, size_t timeout ) -> ( bool result );
-
-   method: start( );
-
-   attribute: string current_state;
-}
+attribute: string current_state;
