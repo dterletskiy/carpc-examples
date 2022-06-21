@@ -89,7 +89,7 @@ add_library(
 )
 
 target_link_libraries( ${TARGET_NAME} tracing )
-target_link_libraries( ${TARGET_NAME} framework )
+target_link_libraries( ${TARGET_NAME} runtime )
 
 if( DLT_TRACE )
    target_link_libraries( ${TARGET_NAME} dlt )
