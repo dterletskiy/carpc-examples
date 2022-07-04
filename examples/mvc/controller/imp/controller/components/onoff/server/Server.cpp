@@ -49,7 +49,7 @@ void Server::request_trigger_state( const std::string& state, const std::size_t&
 
 void Server::process_timer( const carpc::comm::timer::ID id )
 {
-   MSG_DBG( "timer '%s' expired", id.name( ).c_str( ) );
+   MSG_DBG( "timer '%s' expired", id.dbg_name( ).c_str( ) );
 
    auto iterator = std::find_if( m_timers.begin( ), m_timers.end( ), [ id ]( const TimerSeqID& element ){ return element.timer->id( ) == id; } );
    if( m_timers.end( ) == iterator )

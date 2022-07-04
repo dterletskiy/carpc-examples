@@ -40,7 +40,7 @@ void Component::process_boot( const std::string& command )
    // sleep(3);
 
    const carpc::comm::timer::ID id = carpc::timer::start( 3000, 1, [ this ]( const carpc::comm::timer::ID id ){ on_timer( id ); } );
-   MSG_DBG( "started timer: %s", id.name( ).c_str( ) );
+   MSG_DBG( "started timer: %s", id.dbg_name( ).c_str( ) );
 }
 
 void Component::process_shutdown( carpc::callback::tBlocker blocker )
@@ -56,7 +56,7 @@ void Component::process_shutdown( carpc::callback::tBlocker blocker )
 
 void Component::process_timer( const carpc::comm::timer::ID id )
 {
-   MSG_DBG( "Timer '%s' expired", id.name( ).c_str( ) );
+   MSG_DBG( "Timer '%s' expired", id.dbg_name( ).c_str( ) );
    if( id == m_timer.id( ) )
    {
       MSG_WRN( "Shutting down system" );
@@ -66,7 +66,7 @@ void Component::process_timer( const carpc::comm::timer::ID id )
 
 void Component::on_timer( const carpc::comm::timer::ID id )
 {
-   MSG_DBG( "Timer expired: %s", id.name( ).c_str( ) );
+   MSG_DBG( "Timer expired: %s", id.dbg_name( ).c_str( ) );
 
    #if 1
    {

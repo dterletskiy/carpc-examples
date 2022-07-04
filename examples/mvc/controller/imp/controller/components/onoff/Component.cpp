@@ -64,7 +64,7 @@ void Component::process_boot( const std::string& command )
 
 void Component::process_timer( const carpc::comm::timer::ID id )
 {
-   MSG_DBG( "Timer '%s' expired", id.name( ).c_str( ) );
+   MSG_DBG( "Timer '%s' expired", id.dbg_name( ).c_str( ) );
    if( id == m_timer.id( ) )
    {
       MSG_WRN( "Shutting down system" );
@@ -74,7 +74,7 @@ void Component::process_timer( const carpc::comm::timer::ID id )
 
 void Component::on_timer( const carpc::comm::timer::ID id )
 {
-   MSG_DBG( "Timer expired: %s", id.name( ).c_str( ) );
+   MSG_DBG( "Timer expired: %s", id.dbg_name( ).c_str( ) );
 
    MSG_WRN( "Preparing shutdown system" );
    m_timer.start( 5000000000, 1 );
@@ -82,8 +82,8 @@ void Component::on_timer( const carpc::comm::timer::ID id )
 
 void Component::process_event( const controller::event::App::Event& event )
 {
-   MSG_DBG( "%s", event.signature( )->name( ).c_str( ) );
+   MSG_DBG( "%s", event.signature( )->dbg_name( ).c_str( ) );
 
    const carpc::comm::timer::ID id = carpc::timer::start( 100000, 1, [ this ]( const carpc::comm::timer::ID id ){ on_timer( id ); } );
-   MSG_DBG( "started timer: %s", id.name( ).c_str( ) );
+   MSG_DBG( "started timer: %s", id.dbg_name( ).c_str( ) );
 }
