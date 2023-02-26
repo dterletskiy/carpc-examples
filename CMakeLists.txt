@@ -30,6 +30,7 @@ set( CMAKE_VERBOSE_MAKEFILE on )
 include_directories( "$ENV{HOME}/.local/include" )
 
 
+
 ###########################################################################################
 #                                                                                         #
 #                                Linkage include directories                              #
@@ -55,9 +56,10 @@ set( PLANTUML_JAR ${ROOT_SOURCE_DIR}/thirdparty/plantuml/plantuml-1.2021.14.jar 
 #                                      Debug messages                                     #
 #                                                                                         #
 ###########################################################################################
-print_cmake_variables( )
 print_project_files( )
 print_toolchain_config( )
+print_environment_variables( )
+print_cmake_variables( )
 
 
 
