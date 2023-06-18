@@ -9,8 +9,7 @@ project( APPLICATION )
 #                                Setup common configuration                               #
 #                                                                                         #
 ###########################################################################################
-setup_target_name( )
-setup_gen_dir( )
+setup_project( TARGET_NAME )
 
 
 
@@ -49,14 +48,20 @@ link_directories( ${SERVICE_BINARY_DIR} )
 #                                      Code generation                                    #
 #                                                                                         #
 ###########################################################################################
-file( GLOB_RECURSE ADL_FILES ${PROJECT_SOURCE_DIR}/*.adl )
+find_files_by_ext( ADL_FILES ${PROJECT_SOURCE_DIR} "${EXTENTIONS_ADL}" )
 generate_xdls( "${ADL_FILES}" PROJECT_GEN_ADL_FILES )
 
-file( GLOB_RECURSE IDL_FILES ${PROJECT_SOURCE_DIR}/*.idl )
+find_files_by_ext( IDL_FILES ${PROJECT_SOURCE_DIR} "${EXTENTIONS_IDL}" )
 generate_xdls( "${IDL_FILES}" PROJECT_GEN_IDL_FILES )
 
-file( GLOB_RECURSE PROTO_FILES ${PROJECT_SOURCE_DIR}/*.proto )
+find_files_by_ext( DDL_FILES ${PROJECT_SOURCE_DIR} "${EXTENTIONS_DDL}" )
+generate_xdls( "${DDL_FILES}" PROJECT_GEN_DDL_FILES )
+
+find_files_by_ext( PROTO_FILES ${PROJECT_SOURCE_DIR} "${EXTENTIONS_PROTO}" )
 generate_gpbs( "${PROTO_FILES}" PROJECT_GEN_PROTO_FILES )
+
+find_files_by_ext( PLANTUML_FILES ${PROJECT_SOURCE_DIR} "${EXTENTIONS_PLANTUML}" )
+generate_plantumls( "${PLANTUML_FILES}" PROJECT_GEN_PLANTUML_FILES )
 
 
 
@@ -65,7 +70,8 @@ generate_gpbs( "${PROTO_FILES}" PROJECT_GEN_PROTO_FILES )
 #                                   Build source file list                                #
 #                                                                                         #
 ###########################################################################################
-file( GLOB_RECURSE PROJECT_SOURCE_FILES ${PROJECT_SOURCE_DIR}/*.cpp )
+find_files_by_ext( PROJECT_SOURCE_FILES ${PROJECT_SOURCE_DIR} "${EXTENTIONS_CPP_SRC}" )
+msg_wrn( "PROJECT_SOURCE_FILES = " ${PROJECT_SOURCE_FILES} )
 
 
 
@@ -83,6 +89,7 @@ add_executable(
    ${PROJECT_SOURCE_FILES}
    ${PROJECT_GEN_ADL_FILES}
    ${PROJECT_GEN_IDL_FILES}
+   ${PROJECT_GEN_DDL_FILES}
    ${PROJECT_GEN_PROTO_FILES}
 )
 
@@ -103,5 +110,14 @@ if( ${OS_TARGET} EQUAL ${OS_ANDROID} )
    target_link_libraries( ${TARGET_NAME} log )
 endif( )
 
+if( USE_GPB )
+   target_link_libraries( ${TARGET_NAME} ${Protobuf_LIBRARIES} )
+endif( )
+
+add_custom_target( "${TARGET_NAME}_documentation" ALL
+      COMMENT "cmake ${TARGET_NAME}_documentation"
+      DEPENDS ${PROJECT_GEN_PLANTUML_FILES}
+   )
+
 install( TARGETS ${TARGET_NAME} DESTINATION bin )
-install( FILES ${PROJECT_SOURCE_DIR}/${TARGET_NAME}.cfg DESTINATION etc )
+install( FILES ${PROJECT_SOURCE_DIR}/${TARGET_NAME}.cfg DESTINATION etc OPTIONAL )

@@ -7,12 +7,12 @@ const carpc::application::Thread::Configuration::tVector services = { };
 
 
 
+#if 0
 #include <bitset>
 #include "carpc/common/IPC.hpp"
 #include "carpc/helpers/functions/print.hpp"
 #include "api/stream/sensor.pb.h"
 
-#if 0
 namespace test_stream {
 
    struct Data
@@ -298,9 +298,9 @@ namespace test_stream {
 
 
 
+#if 0
 #include <json/reader.h>
 
-#if 0
 namespace test_jsoncpp {
 
 } // namespace test_jsoncpp
@@ -308,11 +308,11 @@ namespace test_jsoncpp {
 
 
 
+#if 0
 #include <iostream>
 #include <fstream>
 #include "nlohmann/json.hpp"
 
-#if 0
 namespace test_nlohmann_json {
 
    struct Area
@@ -657,9 +657,9 @@ namespace test_nlohmann_json {
 
 
 
+#if 0
 #include "carpc/tools/Performance.hpp"
 
-#if 0
 // Given number 'a'
 // Find all 'x'and 'y' numbers such that 'x + y + x*y = a'
 // This could be changed to 'm*n=b' where:
