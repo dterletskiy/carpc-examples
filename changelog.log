@@ -1,3 +1,6 @@
+2023.11.22-rev.1
+   - Update "stream" example for testing new ByteStream implementation
+
 2023.06.18-rev.1
    - Update build system from "carpc" versions 3.13.5
 

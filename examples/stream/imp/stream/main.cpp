@@ -1,4 +1,6 @@
 // Framework
+#include "carpc/tools/Performance.hpp"
+#include "carpc/common/TypeInfo.hpp"
 #include "carpc/application/main.hpp"
 
 
@@ -7,13 +9,127 @@ const carpc::application::Thread::Configuration::tVector services = { };
 
 
 
-#if 0
+#if 1
 #include <bitset>
+#include <fstream>
+#include <utility>
 #include "carpc/common/IPC.hpp"
 #include "carpc/helpers/functions/print.hpp"
 #include "api/stream/sensor.pb.h"
 
+
+
 namespace test_stream {
+
+   using tStreamIPC = carpc::ipc::tStreamEx;
+
+
+
+   template< typename ... TYPES >
+   class Container
+   {
+      public:
+         Container( const TYPES& ... args )
+            : m_data( args... )
+            , m_data_test( )
+         { }
+
+         bool run( const char* const message = "" )
+         {
+            MSG_VRB( "----- BEGIN: '%s' -----", message );
+
+            serialize( m_stream );
+            deserialize( m_stream );
+
+            bool result = test( );
+            if( result )
+            {
+               MSG_DBG( "OK" );
+               print( );
+            }
+            else
+            {
+               MSG_ERR( "NOK" );
+               print( );
+            }
+            MSG_VRB( "------ END: '%s' ------", message );
+            return result;
+         }
+
+         bool serialize( tStreamIPC& stream )
+         {
+            auto serialize_element = [ ]( const auto& element, auto& stream )
+            {
+               // std::cout << "s: " << element << std::endl;
+               if( false == stream.push( element ) )
+               {
+                  MSG_ERR( "serialize error" );
+                  return false;
+               }
+               return true;
+            };
+
+            std::apply(
+               [&]( const auto&... elements )
+               {
+                  ( serialize_element( elements, stream ), ... );
+               },
+               m_data
+            );
+
+            return true;
+         }
+
+         bool deserialize( tStreamIPC& stream )
+         {
+            bool result = true;
+            // https://stackoverflow.com/questions/65261797/varadic-template-to-tuple-is-reversed
+            // m_data_test = std::make_tuple( deserialize_element< TYPES >( stream, result )... );
+            std::apply(
+               [ &stream, &result, this ]( auto&... m_data_test )
+               {
+                  ( ( m_data_test = deserialize_element< std::decay_t< decltype( m_data_test ) > >( stream, result ) ), ... );
+               },
+               m_data_test
+            );
+
+            return result;
+         }
+
+         template< typename T >
+         T deserialize_element( tStreamIPC& stream, bool& result )
+         {
+            T element;
+            result &= stream.pop( element );
+            // std::cout << "d: " << element << std::endl;
+            return element;
+         }
+
+         bool test( ) const
+         {
+            return m_data == m_data_test;
+         }
+
+         void print( ) const
+         {
+            std::cout << "Container:" << std::endl;
+            std::cout << "   original:   ";
+            carpc::print( m_data, true );
+            std::cout << "   restored:   ";
+            carpc::print( m_data_test, true );
+            std::cout << std::endl;
+         }
+
+         void dump( ) const
+         {
+            m_stream.dump( );
+         }
+
+      private:
+         std::tuple< TYPES... > m_data;
+         std::tuple< TYPES... > m_data_test;
+         tStreamIPC m_stream;
+   };
 
    struct Data
    {
@@ -25,11 +141,11 @@ namespace test_stream {
       {
       }
 
-      bool to_stream( carpc::ipc::tStream& stream ) const
+      bool to_stream( tStreamIPC& stream ) const
       {
          return carpc::ipc::serialize( stream, m_id, m_name );
       }
-      bool from_stream( carpc::ipc::tStream& stream )
+      bool from_stream( tStreamIPC& stream )
       {
          return carpc::ipc::deserialize( stream, m_id, m_name );
       }
@@ -53,243 +169,303 @@ namespace test_stream {
       std::string m_name = "NoName";
    };
 
-   bool operator==( const Data& data_1, const Data data_2 )
-   {
-      return data_1.id( ) == data_2.id( ) && data_1.name( ) == data_2.name( );
-   }
-
-
-
-   bool operator==( const sensor::Data& data_1, const sensor::Data data_2 )
-   {
-      return data_1.id( ) == data_2.id( ) && data_1.name( ) == data_2.name( );
-   }
-
-
-
-   #define TEST( A, B ) \
-      if( A == B ) \
-      { \
-         MSG_DBG( "%s == %s", #A, #B ); \
-      } \
-      else \
-      { \
-         MSG_ERR( "%s != %s", #A, #B ); \
-      }
-
-
 
 
 
 
    void run( )
    {
-      carpc::ipc::tStream stream;
+      if( false )
+      {
+         {
+            Container< void* > container( malloc( 64 ) );
+            container.run( "void*");
+         }
 
+         {
+            Container< const void* > container( malloc( 64 ) );
+            container.run( "const void*");
+         }
 
+         {
+            Container< bool > container( true );
+            container.run( "bool");
+         }
+
+         {
+            Container< char > container( -127 );
+            container.run( "char");
+         }
+
+         {
+            Container< unsigned char > container( 255 );
+            container.run( "unsigned char");
+         }
+
+         {
+            Container< short > container( -123 );
+            container.run( "short");
+         }
+
+         {
+            Container< unsigned short > container( 123 );
+            container.run( "unsigned short");
+         }
+
+         {
+            Container< int > container( -12345 );
+            container.run( "int");
+         }
+
+         {
+            Container< unsigned int > container( 12345 );
+            container.run( "unsigned int");
+         }
+
+         {
+            Container< long > container( -1234567 );
+            container.run( "long");
+         }
+
+         {
+            Container< unsigned long > container( 1234567 );
+            container.run( "unsigned long");
+         }
+
+         {
+            Container< long long > container( -123456789 );
+            container.run( "long long");
+         }
+
+         {
+            Container< unsigned long long > container( 123456789 );
+            container.run( "unsigned long long");
+         }
+
+         {
+            Container< float > container( 123.456 );
+            container.run( "float");
+         }
+
+         {
+            Container< double > container( -654.321 );
+            container.run( "double");
+         }
+
+         {
+            Container< long double > container( -6540.0321 );
+            container.run( "long double");
+         }
+      }
 
       if( false )
       {
-         bool                       value_bool = true,                        test_value_bool = false;
-         std::uint8_t               value_uint8_t = 0xAB,                     test_value_uint8_t = 0;
-         std::int16_t               value_int16_t = -12345,                   test_value_int16_t = 0;
-         float                      value_float = 123.456,                    test_value_float = 0.0;
-         double                     value_double = -654.321,                  test_value_double = -0.0;
-         std::vector< int >         value_vector_int = { 11, 22, 33 },        test_value_vector_int = { 0 };
-         std::set< int >            value_set_int = { 44, 55, 66 },           test_value_set_int = { 0 };
-         std::optional< double >    value_optional_double = 987.654,          test_value_optional_double = std::nullopt;
-         std::optional< long >      value_optional_long = std::nullopt,       test_value_optional_long = 123456789;
-         std::string                value_string = "Hello CARPC",             test_value_string = { };
-         Data                       value_data{ 0xABCDEF, "DATA" },           test_value_data{ 0, "" };
-         sensor::Data               value_sensor_data,                        test_value_sensor_data;
-         value_sensor_data.set_id( 0xAABBCCDD );
-         value_sensor_data.set_name( "GPB_DATA" );
-         std::shared_ptr< Data > p_value_data = std::make_shared< Data >( 0xABCDEF, "SHARED" );
-         std::shared_ptr< Data > p_value_data_test = nullptr;//std::make_shared< Data >( 0x12345678, "NoName" );
+         {
+            Container< std::string > container( "Testing std::string" );
+            container.run( "std::string" );
+         }
 
-         std::map<
-               std::size_t,
+         {
+            Container< std::basic_string< wchar_t > > container( L"Testing std::wstring" );
+            container.run( "std::wstring" );
+         }
+
+         {
+            Container< std::vector< int > > container( { 11, 22, 33 } );
+            container.run( "std::vector< int >" );
+         }
+
+         {
+            Container< std::list< int > > container( { 11, 22, 33 } );
+            container.run( "std::list< int >" );
+         }
+
+         {
+            Container< std::set< int > > container( { 44, 55, 66 } );
+            container.run( "std::set< int >" );
+         }
+
+         {
+            Container< std::pair< int, float > > container( { 111, 11.11 } );
+            container.run( "std::pair< int, float >" );
+         }
+
+         {
+            Container< std::map< int, float > > container( { { 111, 1.1 }, { 222, 2.2 }, { 333, 3.3 } } );
+            container.run( "std::map< int, float >" );
+         }
+
+         {
+            Container< std::optional< double > > container( 987.654 );
+            container.run( "std::optional< double >" );
+         }
+
+         {
+            Container< std::optional< long > > container( std::nullopt );
+            container.run( "std::optional< long >" );
+         }
+      }
+
+      if( false )
+      {
+         Container<
+               void*, void*, 
+               bool,
+               char, unsigned char,
+               short, unsigned short,
+               int, unsigned int,
+               long, unsigned long,
+               long long, unsigned long long,
+               float,
+               double,
+               long double
+            >
+            container(
+                  malloc( 64 ), nullptr,
+                  true,
+                  'T', 'D',
+                  -123, 123,
+                  -12345, 12345,
+                  -1234567, 1234567,
+                  -123456789, 123456789,
+                  123.456,
+                  -654.321,
+                  -6540.0321
+               );
+         container.run( );
+      }
+
+      if( true )
+      {
+         Container<
                std::map<
-                  std::size_t,
-                  std::vector< std::optional< std::set< double > > >
+                     std::size_t,
+                     std::map<
+                        std::size_t,
+                        std::vector< std::optional< std::set< double > > >
+                     >
                >
-         > value =
-         {
-            {
-               100,
-               {
-                  { 11111, std::vector< std::optional< std::set< double > > >{ std::set< double >{ 1.1, 2.2, 3.3 } } },
-                  { 22222, std::vector< std::optional< std::set< double > > >{ std::set< double >{ 4.4, 5.5, 6.6 } } },
-                  { 33333, std::vector< std::optional< std::set< double > > >{ std::nullopt } }
-               }
-            },
-            {
-               200,
-               {
-                  { 44444, std::vector< std::optional< std::set< double > > >{ std::nullopt } },
-                  { 55555, std::vector< std::optional< std::set< double > > >{ std::set< double >{ 7.7, 8.8, 9.9 } } },
-                  { 66666, std::vector< std::optional< std::set< double > > >
+            >
+            container_map(
+                  {
                      {
-                        std::set< double >{ 1.0, 2.0, 3.0 }, std::nullopt, std::nullopt
-                     }
-                  },
-               }
-            },
-         }, test_value;
-
-         carpc::ipc::serialize(
-                 stream
-               , value_bool
-               , value_uint8_t
-               , value_int16_t
-               , value_float
-               , value_double
-               , value_vector_int
-               , value_set_int
-               , value_optional_double
-               , value_optional_long
-               , value_string
-               , value_data
-               , value_sensor_data
-               , value
-               , p_value_data
-            );
-
-         carpc::ipc::deserialize(
-                 stream
-               , test_value_bool
-               , test_value_uint8_t
-               , test_value_int16_t
-               , test_value_float
-               , test_value_double
-               , test_value_vector_int
-               , test_value_set_int
-               , test_value_optional_double
-               , test_value_optional_long
-               , test_value_string
-               , test_value_data
-               , test_value_sensor_data
-               , test_value
-               , p_value_data_test
-            );
-
-         TEST( value_bool, test_value_bool );
-         TEST( value_uint8_t, test_value_uint8_t );
-         TEST( value_int16_t, test_value_int16_t );
-         TEST( value_float, test_value_float );
-         TEST( value_double, test_value_double );
-         TEST( value_vector_int, test_value_vector_int );
-         TEST( value_set_int, test_value_set_int );
-         TEST( value_optional_double, test_value_optional_double );
-         TEST( value_optional_long, test_value_optional_long );
-         TEST( value_string, test_value_string );
-         TEST( value_data, test_value_data );
-         TEST( value_sensor_data, test_value_sensor_data );
-         TEST( value, test_value );
-
-         if( nullptr != p_value_data )
-         {
-            p_value_data->print( );
-         }
-         else
-         {
-            MSG_DBG( "p_value_data = nullptr" );
-         }
-         if( nullptr != p_value_data_test )
-         {
-            p_value_data_test->print( );
-         }
-         else
-         {
-            MSG_DBG( "p_value_data_test = nullptr" );
-         }
+                        100,
+                        {
+                           { 11111, std::vector< std::optional< std::set< double > > >{ std::set< double >{ 1.1, 2.2, 3.3 } } },
+                           { 22222, std::vector< std::optional< std::set< double > > >{ std::set< double >{ 4.4, 5.5, 6.6 } } },
+                           { 33333, std::vector< std::optional< std::set< double > > >{ std::nullopt } }
+                        }
+                     },
+                     {
+                        200,
+                        {
+                           { 44444, std::vector< std::optional< std::set< double > > >{ std::nullopt } },
+                           { 55555, std::vector< std::optional< std::set< double > > >{ std::set< double >{ 7.7, 8.8, 9.9 } } },
+                           { 66666, std::vector< std::optional< std::set< double > > >
+                              {
+                                 std::set< double >{ 1.0, 2.0, 3.0 }, std::nullopt, std::nullopt
+                              }
+                           },
+                        }
+                     },
+                  }
+               );
+         container_map.run( );
       }
 
-      if( false )
-      {
-         std::shared_ptr< Data > p_value_data = std::make_shared< Data >( 0xABCDEF, "SHARED" );
-         std::shared_ptr< Data > p_value_data_test = nullptr;//std::make_shared< Data >( 0x12345678, "NoName" );
-         if( nullptr != p_value_data )
-         {
-            p_value_data->print( );
-         }
-         else
-         {
-            MSG_DBG( "p_value_data = nullptr" );
-         }
-         if( nullptr != p_value_data_test )
-         {
-            p_value_data_test->print( );
-         }
-         else
-         {
-            MSG_DBG( "p_value_data_test = nullptr" );
-         }
+      // if( false )
+      // {
+      //    Container<
+      //          void*, void*, 
+      //          bool,
+      //          char, unsigned char,
+      //          short, unsigned short,
+      //          int, unsigned int,
+      //          long, unsigned long,
+      //          long long, unsigned long long,
+      //          float,
+      //          double,
+      //          long double
+      //       >
+      //       container_simple(
+      //             malloc( 64 ), nullptr,
+      //             true,
+      //             'T', 'D',
+      //             -123, 123,
+      //             -12345, 12345,
+      //             -1234567, 1234567,
+      //             -123456789, 123456789,
+      //             123.456,
+      //             -654.321,
+      //             -6540.0321
+      //          );
+      //    container_simple.print( );
+      //    container_simple.run( );
 
-         carpc::ipc::serialize( stream, p_value_data );
+      //    Container<
+      //          std::string,
+      //          std::vector< int >,
+      //          std::set< int >,
+      //          std::optional< double >,
+      //          std::optional< long >
+      //       >
+      //       container_containers(
+      //             "Hello CARPC",
+      //             { 11, 22, 33 },
+      //             { 44, 55, 66 },
+      //             987.654,
+      //             std::nullopt
+      //          );
+      //    container_containers.print( );
+      //    container_containers.run( );
 
-         carpc::ipc::deserialize( stream, p_value_data_test );
+      //    Container<
+      //          std::map<
+      //                std::size_t,
+      //                std::map<
+      //                   std::size_t,
+      //                   std::vector< std::optional< std::set< double > > >
+      //                >
+      //          >
+      //       >
+      //       container_map(
+      //             {
+      //                {
+      //                   100,
+      //                   {
+      //                      { 11111, std::vector< std::optional< std::set< double > > >{ std::set< double >{ 1.1, 2.2, 3.3 } } },
+      //                      { 22222, std::vector< std::optional< std::set< double > > >{ std::set< double >{ 4.4, 5.5, 6.6 } } },
+      //                      { 33333, std::vector< std::optional< std::set< double > > >{ std::nullopt } }
+      //                   }
+      //                },
+      //                {
+      //                   200,
+      //                   {
+      //                      { 44444, std::vector< std::optional< std::set< double > > >{ std::nullopt } },
+      //                      { 55555, std::vector< std::optional< std::set< double > > >{ std::set< double >{ 7.7, 8.8, 9.9 } } },
+      //                      { 66666, std::vector< std::optional< std::set< double > > >
+      //                         {
+      //                            std::set< double >{ 1.0, 2.0, 3.0 }, std::nullopt, std::nullopt
+      //                         }
+      //                      },
+      //                   }
+      //                },
+      //             }
+      //          );
+      //    container_map.print( );
+      //    container_map.run( );
 
-         if( nullptr != p_value_data )
-         {
-            p_value_data->print( );
-         }
-         else
-         {
-            MSG_DBG( "p_value_data = nullptr" );
-         }
-         if( nullptr != p_value_data_test )
-         {
-            p_value_data_test->print( );
-         }
-         else
-         {
-            MSG_DBG( "p_value_data_test = nullptr" );
-         }
-      }
-
-      if( false )
-      {
-         std::unique_ptr< Data > p_value_data = std::make_unique< Data >( 0xABCDEF, "UNIQUE" );
-         std::unique_ptr< Data > p_value_data_test = nullptr;//std::make_unique< Data >( 0x12345678, "NoName" );
-         if( nullptr != p_value_data )
-         {
-            p_value_data->print( );
-         }
-         else
-         {
-            MSG_DBG( "p_value_data = nullptr" );
-         }
-         if( nullptr != p_value_data_test )
-         {
-            p_value_data_test->print( );
-         }
-         else
-         {
-            MSG_DBG( "p_value_data_test = nullptr" );
-         }
-
-         carpc::ipc::serialize( stream, p_value_data );
-
-         carpc::ipc::deserialize( stream, p_value_data_test );
-
-         if( nullptr != p_value_data )
-         {
-            p_value_data->print( );
-         }
-         else
-         {
-            MSG_DBG( "p_value_data = nullptr" );
-         }
-         if( nullptr != p_value_data_test )
-         {
-            p_value_data_test->print( );
-         }
-         else
-         {
-            MSG_DBG( "p_value_data_test = nullptr" );
-         }
-      }
+      //    Container<
+      //          std::shared_ptr< Data >,
+      //          std::shared_ptr< Data >
+      //       >
+      //       container_pointers(
+      //             std::make_shared< Data >( 0xABCDEF, "SHARED" ),
+      //             nullptr
+      //          );
+      //    container_pointers.print( );
+      //    container_pointers.run( );
+      // }
 
    }
 
@@ -731,7 +907,7 @@ bool test( int argc, char** argv, char** envp )
 {
    MSG_MARKER( "TEST" );
 
-   // test_stream::run( );
+   test_stream::run( );
    // test_nlohmann_json::run( );
 
    MSG_MARKER( "TEST" );
